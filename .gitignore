@@ -1,0 +1,13 @@
+.agents/
+.codex/
+.impeccable/
+.worktrees/
+
+node_modules/
+dist/
+coverage/
+src-tauri/target/
+
+*.log
+.DS_Store
+Thumbs.db
