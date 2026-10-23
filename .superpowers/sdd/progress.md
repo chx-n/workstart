@@ -1,3 +1,4 @@
 # Workstart SDD Progress
 
-No tasks complete.
+- Task 1 complete: bootstrap and test harness.
+- Tasks 2–9 not started.
