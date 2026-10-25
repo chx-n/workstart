@@ -6,6 +6,79 @@ pub mod orchestration;
 pub mod platform;
 pub mod windows;
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DiscoveredAppView {
+    id: String,
+    name: String,
+    launch_ref: config::LaunchRefView,
+    process_matchers: Vec<config::ProcessMatcherView>,
+}
+
+#[tauri::command]
+fn discover_installed_apps() -> Result<Vec<DiscoveredAppView>, config::ConfigError> {
+    #[cfg(target_os = "linux")]
+    {
+        use platform::PlatformAdapter;
+        let adapter = platform::linux::LinuxAdapter {
+            paths: platform::linux::LinuxPaths::from_environment(),
+        };
+        return adapter
+            .discover()
+            .map(|apps| {
+                apps.into_iter()
+                    .map(|app| DiscoveredAppView {
+                        id: app.id,
+                        name: app.name,
+                        launch_ref: app.launch_ref.into(),
+                        process_matchers: Vec::new(),
+                    })
+                    .collect()
+            })
+            .map_err(|category| config::ConfigError {
+                category,
+                message: "Installed apps could not be discovered.".into(),
+            });
+    }
+    #[cfg(target_os = "windows")]
+    {
+        return Ok(windows::native::discover_installed()
+            .into_iter()
+            .map(|app| DiscoveredAppView {
+                id: app.executable.clone(),
+                name: app.name,
+                launch_ref: config::LaunchRefView::Executable {
+                    value: app.executable,
+                },
+                process_matchers: Vec::new(),
+            })
+            .collect());
+    }
+    #[allow(unreachable_code)]
+    Ok(Vec::new())
+}
+
+#[tauri::command]
+fn get_app_icon(_app_id: String) -> Result<Option<String>, config::ConfigError> {
+    Ok(None)
+}
+
+#[tauri::command]
+fn pick_executable() -> Result<Option<serde_json::Value>, config::ConfigError> {
+    Err(config::ConfigError {
+        category: domain::ErrorCategory::Unsupported,
+        message: "Executable picker is unavailable in this build.".into(),
+    })
+}
+
+#[tauri::command]
+fn export_logs() -> Result<(), config::ConfigError> {
+    Err(config::ConfigError {
+        category: domain::ErrorCategory::Unsupported,
+        message: "Choose a diagnostics destination from a packaged build.".into(),
+    })
+}
+
 #[cfg(target_os = "linux")]
 struct LinuxRuntime {
     adapter: platform::linux::LinuxAdapter,
@@ -136,7 +209,11 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             config::get_workflow,
             config::save_workflow,
-            launch_targets
+            launch_targets,
+            discover_installed_apps,
+            get_app_icon,
+            pick_executable,
+            export_logs
         ])
         .run(tauri::generate_context!())
         .expect("error while running Workstart");

@@ -295,16 +295,15 @@ impl PlatformAdapter for LinuxAdapter {
                 return RunningState::Running;
             }
             let process_base = path.file_name().and_then(|v| v.to_str()).unwrap_or("");
-            if (brave
+            if ((brave
                 && matches!(
                     process_base,
                     "brave" | "brave-browser" | "brave-browser-stable"
                 ))
-                || (antigravity && process_base == "antigravity")
+                || (antigravity && process_base == "antigravity"))
+                && !wrapper(&path)
             {
-                if !wrapper(&path) {
-                    alias_paths.insert(path.clone());
-                }
+                alias_paths.insert(path.clone());
             }
             if names.contains(&process.name.as_str()) || process_base == base {
                 uncertain = true;
@@ -333,12 +332,12 @@ impl LinuxAdapter {
             collect_files(&root, 0, &mut files);
             files.sort();
             for path in files {
-                if path.extension().is_some_and(|ext| ext == "desktop") {
-                    if let Ok(relative) = path.strip_prefix(&root) {
-                        let id = relative.to_string_lossy().replace('/', "-");
-                        if !id.starts_with('-') {
-                            result.entry(id).or_insert(path);
-                        }
+                if path.extension().is_some_and(|ext| ext == "desktop")
+                    && let Ok(relative) = path.strip_prefix(&root)
+                {
+                    let id = relative.to_string_lossy().replace('/', "-");
+                    if !id.starts_with('-') {
+                        result.entry(id).or_insert(path);
                     }
                 }
             }

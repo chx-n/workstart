@@ -3,9 +3,10 @@
 Workstart is a focused desktop launcher for one editable work workflow. It is
 built with Tauri 2, Svelte 5, TypeScript, and Vite.
 
-This repository currently contains the secure application bootstrap and test
-harness. Workflow configuration, discovery, launching, and the complete user
-interface are implemented in later milestones.
+Workstart stores one local workflow, discovers installed applications, launches
+enabled targets concurrently, skips confirmed-running apps, and retries only
+failed targets. Settings edits use individual argument values; shell command
+strings are never accepted.
 
 ## Supported platforms
 
@@ -38,6 +39,11 @@ pnpm check
 pnpm build
 cargo test --manifest-path src-tauri/Cargo.toml
 ```
+
+The backend exposes only named commands: `get_workflow`, `save_workflow`,
+`launch_targets`, `discover_installed_apps`, `get_app_icon`,
+`pick_executable`, and `export_logs`. Platform packaging and signing remain
+release-environment work; see [docs/RELEASING.md](docs/RELEASING.md).
 
 Unsigned platform packages, signing prerequisites, and the release checklist
 are documented in [docs/RELEASING.md](docs/RELEASING.md). Packaging commands do

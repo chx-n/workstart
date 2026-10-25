@@ -36,14 +36,14 @@ pub enum RecoveryReason {
 /// Frontend-facing workflow document. This intentionally differs from the
 /// versioned persistence schema so IPC changes cannot silently migrate disk
 /// data (and vice versa).
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WorkflowView {
     pub schema_version: u32,
     pub apps: Vec<AppTargetView>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AppTargetView {
     pub id: uuid::Uuid,
@@ -58,7 +58,7 @@ pub struct AppTargetView {
     pub validation_error: Option<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum LaunchRefView {
     Executable {
@@ -74,11 +74,106 @@ pub enum LaunchRefView {
     },
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum ProcessMatcherView {
     Executable { platform: Platform, value: String },
     Name { platform: Platform, value: String },
+}
+
+impl WorkflowView {
+    pub fn into_config(self, existing: WorkflowConfig) -> Result<WorkflowConfig, ConfigError> {
+        let mut targets = existing.targets;
+        if self.schema_version != crate::domain::SCHEMA_VERSION || self.apps.len() > 64 {
+            return Err(ConfigError {
+                category: ErrorCategory::InvalidConfiguration,
+                message: "Workflow format is invalid.".into(),
+            });
+        }
+        let mut seen = std::collections::HashSet::new();
+        for app in self.apps {
+            if !seen.insert(app.id) {
+                return Err(ConfigError {
+                    category: ErrorCategory::InvalidConfiguration,
+                    message: "Workflow contains duplicate app IDs.".into(),
+                });
+            }
+            let reference = LaunchRef::try_from(app.launch_ref)?;
+            let matchers = app
+                .process_matchers
+                .into_iter()
+                .map(ProcessMatcher::try_from)
+                .collect::<Result<Vec<_>, _>>()?;
+            if let Some(target) = targets.iter_mut().find(|target| target.id == app.id) {
+                target.name = app.name;
+                target.arguments = app.arguments;
+                target.enabled = app.enabled;
+                target.process_matchers = matchers;
+                match current_platform() {
+                    Platform::Linux => target.linux = Some(reference),
+                    Platform::Windows => target.windows = Some(reference),
+                }
+            } else {
+                let mut target = AppTarget {
+                    id: app.id,
+                    name: app.name,
+                    enabled: app.enabled,
+                    linux: None,
+                    windows: None,
+                    arguments: app.arguments,
+                    process_matchers: matchers,
+                };
+                match current_platform() {
+                    Platform::Linux => target.linux = Some(reference),
+                    Platform::Windows => target.windows = Some(reference),
+                }
+                targets.push(target);
+            }
+        }
+        targets.retain(|target| seen.contains(&target.id));
+        let workflow = WorkflowConfig {
+            schema_version: self.schema_version,
+            targets,
+        };
+        workflow.validate().map_err(|error| ConfigError {
+            category: ErrorCategory::InvalidConfiguration,
+            message: error.to_string(),
+        })?;
+        Ok(workflow)
+    }
+}
+
+impl TryFrom<LaunchRefView> for LaunchRef {
+    type Error = ConfigError;
+    fn try_from(reference: LaunchRefView) -> Result<Self, Self::Error> {
+        Ok(match reference {
+            LaunchRefView::Executable { value } => LaunchRef::Executable { path: value },
+            LaunchRefView::DesktopEntry {
+                value,
+                executable_hint,
+            } => LaunchRef::DesktopEntry {
+                desktop_id: value,
+                executable_hint,
+            },
+            LaunchRefView::WindowsApp { value } => LaunchRef::WindowsApp { app_name: value },
+        })
+    }
+}
+
+impl TryFrom<ProcessMatcherView> for ProcessMatcher {
+    type Error = ConfigError;
+    fn try_from(matcher: ProcessMatcherView) -> Result<Self, Self::Error> {
+        Ok(match matcher {
+            ProcessMatcherView::Executable { platform, value } => ProcessMatcher::Executable {
+                platform,
+                path: value,
+            },
+            ProcessMatcherView::Name { platform, value } => ProcessMatcher::Name {
+                platform,
+                name: value,
+            },
+        })
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -108,8 +203,10 @@ impl WorkflowState {
         ))
     }
 
-    pub fn save_workflow(&self, workflow: &WorkflowConfig) -> Result<(), ConfigError> {
-        self.0.lock().map_err(|_| state_error())?.save(workflow)
+    pub fn save_workflow(&self, workflow: WorkflowView) -> Result<(), ConfigError> {
+        let store = self.0.lock().map_err(|_| state_error())?;
+        let existing = store.load()?.workflow;
+        store.save(&workflow.into_config(existing)?)
     }
 
     /// Loads the persisted, validated document for backend-only operations.
@@ -120,7 +217,7 @@ impl WorkflowState {
 }
 
 impl WorkflowView {
-    fn from_config(workflow: WorkflowConfig, platform: Platform) -> Self {
+    pub fn from_config(workflow: WorkflowConfig, platform: Platform) -> Self {
         Self {
             schema_version: workflow.schema_version,
             apps: workflow
@@ -228,9 +325,9 @@ pub fn get_workflow(state: tauri::State<'_, WorkflowState>) -> Result<WorkflowVi
 #[tauri::command]
 pub fn save_workflow(
     state: tauri::State<'_, WorkflowState>,
-    workflow: WorkflowConfig,
+    workflow: WorkflowView,
 ) -> Result<(), ConfigError> {
-    state.save_workflow(&workflow)
+    state.save_workflow(workflow)
 }
 
 impl ConfigStore {
