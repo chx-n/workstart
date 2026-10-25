@@ -10,6 +10,11 @@
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
+    "validate:packaging": "cargo test --manifest-path src-tauri/Cargo.toml --test packaging",
+    "icons:generate": "bash scripts/generate-icons.sh",
+    "build:debug": "tauri build --debug --no-bundle",
+    "package:fedora:unsigned": "tauri build --target x86_64-unknown-linux-gnu --bundles rpm --no-sign",
+    "package:windows:unsigned": "tauri build --target x86_64-pc-windows-msvc --bundles nsis --no-sign",
     "tauri": "tauri"
   },
   "dependencies": {

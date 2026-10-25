@@ -39,6 +39,10 @@ pnpm build
 cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
+Unsigned platform packages, signing prerequisites, and the release checklist
+are documented in [docs/RELEASING.md](docs/RELEASING.md). Packaging commands do
+not install or publish artifacts.
+
 ## Security model
 
 Platform access belongs to the Rust backend. The frontend receives only
