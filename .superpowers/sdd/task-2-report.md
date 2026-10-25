@@ -9,6 +9,9 @@
 - Added same-directory atomic saves using a temporary file, file synchronization, and replacement rename. Validation and write failures preserve the last valid workflow.
 - Added mutex-backed managed state and narrow `get_workflow` and `save_workflow` Tauri commands. The frontend cannot supply or alter the configuration directory.
 - Corrected two persistence edge cases during self-review: heavily escaped valid JSON now fits within the guarded read bound, and recovery releases its temporary-path reservation before rename for Windows compatibility.
+- Added a serialization-only `get_workflow` view DTO for the Task 6 frontend contract: its outer document is exactly `schemaVersion` and `apps`, and app fields use camelCase names such as `launchRef` and `processMatchers`. Recovery remains internal to persistence.
+- Preserved the `save_workflow(WorkflowConfig)` command and the snake_case, versioned disk schema; target UUIDs remain the identifiers exposed to the frontend.
+- Added exact JSON serialization coverage for default, saved executable, and recovered workflows, including the unchanged persisted JSON shape.
 
 ## Verification
 
@@ -22,6 +25,16 @@
 - `git diff --check`
 
 All commands above completed successfully before the Task 2 commit.
+
+## IPC DTO Follow-up Verification
+
+- `cargo test --manifest-path src-tauri/Cargo.toml` — 21 tests passed.
+- `cargo fmt --manifest-path src-tauri/Cargo.toml -- --check`
+- `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings`
+- `pnpm test` — 2 frontend tests passed.
+- `pnpm check` — 0 errors and 0 warnings.
+- `pnpm build`
+- `git diff --check`
 
 ## Files
 
