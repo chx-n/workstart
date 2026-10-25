@@ -1,4 +1,5 @@
 # Workstart SDD Progress
 
 - Task 1 complete: bootstrap and test harness.
-- Tasks 2–9 not started.
+- Task 2 complete: domain model and versioned machine-local workflow persistence.
+- Tasks 3–9 not started.
