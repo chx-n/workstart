@@ -91,7 +91,16 @@ fn managed_state_keeps_the_persistence_save_contract_and_disk_schema() {
         },
     ];
 
-    state.save_workflow(&workflow).unwrap();
+    state
+        .save_workflow(workstart_lib::config::WorkflowView::from_config(
+            workflow.clone(),
+            if cfg!(target_os = "windows") {
+                Platform::Windows
+            } else {
+                Platform::Linux
+            },
+        ))
+        .unwrap();
 
     let persisted: serde_json::Value =
         serde_json::from_slice(&std::fs::read(owned.join("workflow.json")).unwrap()).unwrap();
