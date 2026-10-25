@@ -2,6 +2,7 @@ use tauri::Manager;
 
 pub mod config;
 pub mod domain;
+pub mod windows;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
