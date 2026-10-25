@@ -111,6 +111,12 @@ impl WorkflowState {
     pub fn save_workflow(&self, workflow: &WorkflowConfig) -> Result<(), ConfigError> {
         self.0.lock().map_err(|_| state_error())?.save(workflow)
     }
+
+    /// Loads the persisted, validated document for backend-only operations.
+    /// The IPC command receives IDs and resolves them against this value.
+    pub fn load_for_launch(&self) -> Result<WorkflowConfig, ConfigError> {
+        Ok(self.0.lock().map_err(|_| state_error())?.load()?.workflow)
+    }
 }
 
 impl WorkflowView {
