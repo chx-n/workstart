@@ -42,6 +42,13 @@ function service(
     launchTargets,
     openSettings: vi.fn().mockResolvedValue(undefined),
     exitApp: vi.fn().mockResolvedValue(undefined),
+    discoverInstalledApps: vi.fn().mockResolvedValue([]),
+    getAppIcon: vi.fn().mockResolvedValue(undefined),
+    pickExecutable: vi.fn().mockResolvedValue(undefined),
+    saveWorkflow: vi.fn().mockResolvedValue(undefined),
+    exportDiagnostics: vi.fn().mockResolvedValue(undefined),
+    refreshMainWindow: vi.fn().mockResolvedValue(undefined),
+    subscribeWorkflowSaved: vi.fn().mockResolvedValue(() => undefined),
   };
 }
 

@@ -21,6 +21,7 @@
   let loadFailed = $state(false);
   let settingsError = $state(false);
   let exitTimer: ReturnType<typeof setTimeout> | undefined;
+  let unlistenWorkflowSaved: (() => void) | undefined;
 
   const validEnabledApps = $derived(apps.filter((app) => app.enabled && !app.validationError));
   const failedIds = $derived(validEnabledApps.filter((app) => statuses[app.id] === 'Failed').map((app) => app.id));
@@ -40,10 +41,19 @@
 
   onMount(() => {
     void loadWorkflow();
+    void service.subscribeWorkflowSaved(() => {
+      loading = true;
+      loadFailed = false;
+      complete = false;
+      void loadWorkflow();
+    }).then((unlisten) => {
+      unlistenWorkflowSaved = unlisten;
+    });
   });
 
   onDestroy(() => {
     if (exitTimer !== undefined) clearTimeout(exitTimer);
+    unlistenWorkflowSaved?.();
   });
 
   async function loadWorkflow() {

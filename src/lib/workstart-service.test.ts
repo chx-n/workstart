@@ -18,7 +18,7 @@ vi.mock('@tauri-apps/api/webviewWindow', () => {
   return { WebviewWindow };
 });
 
-import { tauriWorkstartService } from './workstart-service';
+import { tauriWorkstartService, type Workflow } from './workstart-service';
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -73,5 +73,32 @@ describe('tauriWorkstartService', () => {
     await tauriWorkstartService.exitApp();
 
     expect(exit).toHaveBeenCalledWith(0);
+  });
+
+  it('uses only fixed settings IPC commands and payloads', async () => {
+    const workflow: Workflow = { schemaVersion: 1, apps: [] };
+    const discovered = [{ id: 'brave', name: 'Brave', launchRef: { kind: 'executable', value: '/usr/bin/brave' }, processMatchers: [] }];
+    vi.mocked(invoke)
+      .mockResolvedValueOnce(discovered)
+      .mockResolvedValueOnce('data:image/png;base64,AAAA')
+      .mockResolvedValueOnce({ path: '/usr/bin/brave', name: 'Brave', processMatchers: [] })
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined);
+
+    await expect(tauriWorkstartService.discoverInstalledApps()).resolves.toEqual(discovered);
+    await expect(tauriWorkstartService.getAppIcon('brave')).resolves.toBe('data:image/png;base64,AAAA');
+    await expect(tauriWorkstartService.pickExecutable()).resolves.toEqual({
+      path: '/usr/bin/brave',
+      name: 'Brave',
+      processMatchers: [],
+    });
+    await tauriWorkstartService.saveWorkflow(workflow);
+    await tauriWorkstartService.exportDiagnostics();
+
+    expect(invoke).toHaveBeenNthCalledWith(1, 'discover_installed_apps');
+    expect(invoke).toHaveBeenNthCalledWith(2, 'get_app_icon', { appId: 'brave' });
+    expect(invoke).toHaveBeenNthCalledWith(3, 'pick_executable');
+    expect(invoke).toHaveBeenNthCalledWith(4, 'save_workflow', { workflow });
+    expect(invoke).toHaveBeenNthCalledWith(5, 'export_logs');
   });
 });
