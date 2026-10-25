@@ -1,5 +1,8 @@
 use tauri::Manager;
 
+pub mod config;
+pub mod domain;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -10,6 +13,14 @@ pub fn run() {
                 let _ = window.set_focus();
             }
         }))
+        .setup(|app| {
+            app.manage(config::WorkflowState::new(app.path().app_config_dir()?));
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            config::get_workflow,
+            config::save_workflow
+        ])
         .run(tauri::generate_context!())
         .expect("error while running Workstart");
 }
