@@ -54,7 +54,18 @@ fn capability_is_limited_to_the_application_windows_without_shell_access() {
         capability_json["windows"],
         serde_json::json!(["main", "settings"])
     );
-    assert_eq!(capability_json["permissions"], serde_json::json!([]));
+    assert_eq!(
+        capability_json["permissions"],
+        serde_json::json!([
+            "core:app:allow-exit",
+            "core:event:allow-emit",
+            "core:event:allow-listen",
+            "core:webview:allow-create-webview-window",
+            "core:window:allow-get-all-windows",
+            "core:window:allow-set-focus",
+            "core:window:allow-show"
+        ])
+    );
     assert!(!capability.contains("shell"));
 }
 

@@ -1,7 +1,15 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Workstart application windows with no frontend system permissions",
+  "description": "Workstart application windows with only the permissions required by the launcher UI",
   "windows": ["main", "settings"],
-  "permissions": []
+  "permissions": [
+    "core:app:allow-exit",
+    "core:event:allow-emit",
+    "core:event:allow-listen",
+    "core:webview:allow-create-webview-window",
+    "core:window:allow-get-all-windows",
+    "core:window:allow-set-focus",
+    "core:window:allow-show"
+  ]
 }
