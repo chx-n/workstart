@@ -41,6 +41,21 @@
   },
   "bundle": {
     "active": true,
-    "targets": "all"
+    "publisher": "chxnn",
+    "homepage": "https://github.com/chxnn/workstart",
+    "copyright": "Copyright © 2026 chxnn",
+    "license": "MIT",
+    "licenseFile": "../LICENSE",
+    "category": "Productivity",
+    "shortDescription": "A focused launcher for starting your work applications.",
+    "longDescription": "Workstart launches one editable local workflow from a compact desktop interface.",
+    "createUpdaterArtifacts": false,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/512x512.png",
+      "icons/icon.ico"
+    ]
   }
 }

@@ -1,0 +1,12 @@
+{
+  "bundle": {
+    "targets": ["rpm"],
+    "linux": {
+      "rpm": {
+        "epoch": 0,
+        "release": "1",
+        "desktopTemplate": "packaging/linux/workstart.desktop.hbs"
+      }
+    }
+  }
+}

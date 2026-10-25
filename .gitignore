@@ -8,6 +8,7 @@ dist/
 coverage/
 src-tauri/target/
 src-tauri/gen/
+src-tauri/tauri.signing.conf.json
 
 *.log
 .DS_Store

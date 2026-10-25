@@ -2,11 +2,14 @@
 
 ```text
 .
-├── docs/superpowers/       Product design and implementation plan
+├── docs/                   Release guide, product design, and implementation plan
+├── scripts/                Deterministic asset-generation helpers
 ├── src/                    Svelte frontend source and component tests
 │   └── test/               Shared frontend test setup
 ├── src-tauri/              Tauri and Rust application
 │   ├── capabilities/       Explicit frontend capability grants
+│   ├── icons/              Source icon and platform derivatives
+│   ├── packaging/          Platform package templates
 │   ├── src/                Rust application entry points
 │   └── tests/              Rust integration tests
 ├── index.html              Vite HTML entry point
