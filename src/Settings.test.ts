@@ -32,6 +32,20 @@ function service(overrides: Record<string, unknown> = {}) {
 afterEach(cleanup);
 
 describe('Workstart settings', () => {
+  it('uses the graphite visual theme contract', async () => {
+    const api = service();
+    render(Settings, { props: { service: api } });
+
+    expect(await screen.findByRole('main')).toHaveAttribute('data-visual-theme', 'graphite');
+  });
+
+  it('uses the editorial command sheet layout contract', async () => {
+    const api = service();
+    render(Settings, { props: { service: api } });
+
+    expect(await screen.findByRole('main')).toHaveAttribute('data-layout', 'editorial-command-sheet');
+  });
+
   it('filters discovered apps and adds a selected result to the workflow', async () => {
     const api = service();
     render(Settings, { props: { service: api } });

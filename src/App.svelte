@@ -171,7 +171,7 @@
   <title>Workstart</title>
 </svelte:head>
 
-<main class="app-shell">
+<main class="app-shell" data-visual-theme="graphite" data-layout="editorial-command-sheet">
   <header class="app-header">
     <div>
       <h1>Workstart</h1>
@@ -222,7 +222,6 @@
               {/if}
             </span>
             <span class="target-status" data-status={statuses[app.id]}>
-              {#if statuses[app.id] === 'Launching'}<span class="status-dot status-dot--pulse"></span>{/if}
               {statuses[app.id]}
             </span>
           </li>

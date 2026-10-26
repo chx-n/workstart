@@ -72,6 +72,20 @@ afterEach(() => {
 });
 
 describe('Workstart main interface', () => {
+  it('uses the graphite visual theme contract', async () => {
+    const api = service([target()]);
+    render(App, { props: { service: api } });
+
+    expect(await screen.findByRole('main')).toHaveAttribute('data-visual-theme', 'graphite');
+  });
+
+  it('uses the editorial command sheet layout contract', async () => {
+    const api = service([target()]);
+    render(App, { props: { service: api } });
+
+    expect(await screen.findByRole('main')).toHaveAttribute('data-layout', 'editorial-command-sheet');
+  });
+
   it('shows a loading state while the workflow is being fetched', () => {
     const workflow = deferred<{ schemaVersion: number; apps: AppTarget[] }>();
     const api = service([]);

@@ -217,7 +217,7 @@
 
 <svelte:head><title>Workstart Settings</title></svelte:head>
 
-<main class="settings-shell" aria-busy={loading}>
+<main class="settings-shell" data-visual-theme="graphite" data-layout="editorial-command-sheet" aria-busy={loading}>
   <header class="settings-header">
     <div><h1>Settings</h1><p>Choose the apps that open with your workspace.</p></div>
     <button class="secondary-button" type="button" onclick={exportDiagnostics}>Export diagnostics</button>
