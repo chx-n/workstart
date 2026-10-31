@@ -2,29 +2,32 @@
 
 ## Goal
 
-Finish Workstart v0.1.0: Tauri 2 launcher for Fedora 44 and Windows 10/11, preloaded with Antigravity IDE and Brave. Merge reviewed task branches, verify locally, then publish to the user's GitHub repository after authentication.
+Replace the graphite editorial interface with a familiar cross-platform desktop productivity design, then verify every existing workflow and state.
 
-## Current commits
+## Approved direction
 
-- `eb9889f` bootstrap/test harness
-- `3100391` Rust domain/config persistence
-- `b8ecd78` main Svelte interface
-- `147ab63` packaging/icons/release docs
+- Familiar Workspace: Fluent 2 and GNOME-informed product UI.
+- Soft neutral surfaces, system light/dark theme, one restrained blue accent.
+- Proper filled and outlined controls, comfortable margins, readable typography, and rounded grouped surfaces.
+- No editorial hairlines, underline-style buttons, tiny tracked mono labels, decorative side borders, bento grids, gradients, glass, or ornamental motion.
+- Main window remains focused on the app list and one prominent Start Work action.
+- Settings becomes a two-pane list/detail workspace. Installed-app discovery moves into an Add apps surface instead of a permanent third column.
 
-## In progress
+## Product and technical constraints
 
-- Core IPC view DTO fix: `feature/workstart-core` dirty
-- Linux adapter: `feature/workstart-linux` dirty
-- Windows adapter: `feature/workstart-windows` dirty
+- Preserve all behavior, copy, test semantics, Tauri commands, and security boundaries.
+- Svelte 5 frontend owns presentation; Rust owns OS access and persistence.
+- Fedora 44 and Windows 10/11 x86-64 remain supported.
+- System theme, visible focus, reduced motion, and readable status text remain required.
+- No shell plugin or shell command strings; local config and logs; no telemetry.
 
-## Constraints
+## Current state
 
-- No shell plugin or shell command strings.
-- Stored target IDs only; local config/logs; no telemetry.
-- Review every task before integration.
-- Do not claim complete before fresh full verification.
-- Windows live verification, Fedora GNOME, RPM generation, code signing, and GitHub publishing remain environment-dependent.
+- Working tree was clean before redesign planning.
+- Current visual implementation is in `src/App.svelte`, `src/Settings.svelte`, and `src/styles.css`.
+- Existing tests cover primary, loading, empty, error, launch, retry, settings, discovery, validation, and save states.
+- `PRODUCT.md` now records durable product truth.
 
-## GitHub blocker
+## Next gate
 
-Remote absent. `gh auth status` reports invalid token for `chx-n`; run `gh auth login -h github.com` in user's terminal, then configure remote `https://github.com/chx-n/workstart.git` after confirming repository name.
+Write and review the redesign specification. After approval, create an implementation plan, implement with tests, capture both windows in light and dark modes, run the Impeccable detector and finish review, then document the shipped visual system.
