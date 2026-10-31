@@ -1,5 +1,12 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import IconAppWindowRegular from 'phosphor-icons-svelte/IconAppWindowRegular.svelte';
+  import IconArrowDownRegular from 'phosphor-icons-svelte/IconArrowDownRegular.svelte';
+  import IconArrowUpRegular from 'phosphor-icons-svelte/IconArrowUpRegular.svelte';
+  import IconDownloadSimpleRegular from 'phosphor-icons-svelte/IconDownloadSimpleRegular.svelte';
+  import IconMagnifyingGlassRegular from 'phosphor-icons-svelte/IconMagnifyingGlassRegular.svelte';
+  import IconPlusRegular from 'phosphor-icons-svelte/IconPlusRegular.svelte';
+  import IconXRegular from 'phosphor-icons-svelte/IconXRegular.svelte';
+  import { onMount, tick } from 'svelte';
 
   import {
     tauriWorkstartService,
@@ -21,6 +28,9 @@
   let saving = $state(false);
   let notice = $state('');
   let actionError = $state('');
+  let showAddApps = $state(false);
+  let addAppButton: HTMLButtonElement;
+  let addAppsDialog = $state<HTMLElement>();
 
   const selected = $derived(apps.find((app) => app.id === selectedId));
   const shownDiscovered = $derived(
@@ -91,6 +101,44 @@
     apps = [...apps, added];
     selectedId = added.id;
     void loadIcon(added);
+    void closeAddApps();
+  }
+
+  async function openAddApps() {
+    search = '';
+    showAddApps = true;
+    await tick();
+    addAppsDialog?.querySelector<HTMLInputElement>('#discovery-search')?.focus();
+  }
+
+  async function closeAddApps() {
+    showAddApps = false;
+    await tick();
+    addAppButton?.focus();
+  }
+
+  function handleDialogKeydown(event: KeyboardEvent) {
+    if (!showAddApps) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      void closeAddApps();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+
+    const focusable = Array.from(
+      addAppsDialog?.querySelectorAll<HTMLElement>('button:not(:disabled), input:not(:disabled)') ?? [],
+    );
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   function removeSelected() {
@@ -164,6 +212,7 @@
       apps = [...apps, added];
       selectedId = added.id;
       void loadIcon(added);
+      void closeAddApps();
     } catch {
       actionError = 'Could not choose an executable.';
     }
@@ -216,39 +265,51 @@
 </script>
 
 <svelte:head><title>Workstart Settings</title></svelte:head>
+<svelte:window onkeydown={handleDialogKeydown} />
 
-<main class="settings-shell" data-visual-theme="graphite" data-layout="editorial-command-sheet" aria-busy={loading}>
+<main class="settings-shell" data-visual-theme="familiar-workspace" data-layout="list-detail-settings" aria-busy={loading}>
   <header class="settings-header">
     <div><h1>Settings</h1><p>Choose the apps that open with your workspace.</p></div>
-    <button class="secondary-button" type="button" onclick={exportDiagnostics}>Export diagnostics</button>
+    <button class="secondary-button" type="button" onclick={exportDiagnostics}>
+      <span aria-hidden="true"><IconDownloadSimpleRegular /></span>
+      Export diagnostics
+    </button>
   </header>
 
-  {#if actionError}<p class="settings-message settings-message--error" role="alert">{actionError}</p>{/if}
-  {#if notice}<p class="settings-message" role="status">{notice}</p>{/if}
-  {#if validationErrors.length > 0}
-    <div class="settings-message settings-message--error" role="alert">
-      {#each validationErrors as error}<div>{error}</div>{/each}
-    </div>
-  {/if}
+  <div class="settings-messages">
+    {#if actionError}<p class="settings-message settings-message--error" role="alert">{actionError}</p>{/if}
+    {#if notice}<p class="settings-message" role="status">{notice}</p>{/if}
+    {#if validationErrors.length > 0}
+      <div class="settings-message settings-message--error" role="alert">
+        {#each validationErrors as error}<div>{error}</div>{/each}
+      </div>
+    {/if}
+  </div>
 
   <section class="settings-content" aria-label="Workflow settings">
-    <aside class="settings-targets">
-      <div class="settings-section-heading"><h2>Your workflow</h2><span>{apps.length}</span></div>
+    <aside class="workflow-pane" aria-label="Workflow">
+      <header class="pane-header">
+        <div><h2>Workflow</h2><span>{apps.length}</span></div>
+        <button class="primary-button primary-button--compact" type="button" bind:this={addAppButton} onclick={openAddApps}>
+          <span aria-hidden="true"><IconPlusRegular /></span>
+          Add app
+        </button>
+      </header>
       {#if loading}
         <p class="settings-empty">Loading apps…</p>
       {:else if apps.length === 0}
-        <p class="settings-empty">No apps yet. Add one from Installed apps.</p>
+        <p class="settings-empty">No apps yet. Add one to build your workflow.</p>
       {:else}
         <div class="settings-target-list" role="list" aria-label="Apps in your workflow">
           {#each apps as app, index (app.id)}
             <div class="settings-target" class:settings-target--selected={app.id === selectedId} role="listitem">
               <button class="settings-target__select" type="button" aria-pressed={app.id === selectedId} onclick={() => selectedId = app.id}>
-                {#if app.iconDataUrl}<img src={app.iconDataUrl} alt="" />{:else}<span class="settings-icon" aria-hidden="true">□</span>{/if}
+                {#if app.iconDataUrl}<img src={app.iconDataUrl} alt="" />{:else}<span class="settings-icon" aria-hidden="true"><IconAppWindowRegular /></span>{/if}
                 <span class="settings-target__copy"><span class="settings-target__name" title={app.name}>{app.name}</span><small>{app.enabled ? 'Enabled' : 'Disabled'}</small></span>
               </button>
               <div class="settings-target__actions" aria-label={`Reorder ${app.name}`}>
-                <button type="button" aria-label={`Move ${app.name} up`} disabled={index === 0} onclick={() => { selectedId = app.id; moveSelected(-1); }}>↑</button>
-                <button type="button" aria-label={`Move ${app.name} down`} disabled={index === apps.length - 1} onclick={() => { selectedId = app.id; moveSelected(1); }}>↓</button>
+                <button type="button" aria-label={`Move ${app.name} up`} disabled={index === 0} onclick={() => { selectedId = app.id; moveSelected(-1); }}><IconArrowUpRegular /></button>
+                <button type="button" aria-label={`Move ${app.name} down`} disabled={index === apps.length - 1} onclick={() => { selectedId = app.id; moveSelected(1); }}><IconArrowDownRegular /></button>
               </div>
             </div>
           {/each}
@@ -256,45 +317,90 @@
       {/if}
     </aside>
 
-    <section class="settings-editor" aria-label="Selected app">
+    <section class="detail-pane" aria-label="App details">
       {#if selected}
-        <div class="settings-section-heading"><h2>App details</h2><button class="danger-button" type="button" onclick={removeSelected}>Remove</button></div>
-        <label>Name <input value={selected.name} maxlength="128" oninput={(event) => updateSelected({ name: event.currentTarget.value })} /></label>
-        <label class="settings-checkbox"><input type="checkbox" checked={selected.enabled} onchange={(event) => updateSelected({ enabled: event.currentTarget.checked })} /> Enable this app</label>
-        <div class="settings-launch-ref"><span>Launch target</span><code title={selected.launchRef.value}>{selected.launchRef.value}</code></div>
-        {#if selected.validationError}
-          <div class="repair-callout" role="alert"><span>{selected.validationError}</span><button class="secondary-button" type="button" aria-label={`Choose executable for ${selected.name}`} onclick={repairSelected}>Choose executable</button></div>
-        {/if}
-        <fieldset class="settings-arguments">
-          <legend>Arguments</legend>
+        <header class="detail-identity">
+          {#if selected.iconDataUrl}<img src={selected.iconDataUrl} alt="" />{:else}<span class="settings-icon settings-icon--large" aria-hidden="true"><IconAppWindowRegular /></span>{/if}
+          <div><h2>{selected.name}</h2><p>{selected.enabled ? 'Opens with your workspace' : 'Disabled'}</p></div>
+          <label class="switch-control">
+            <span class="sr-only">Enable this app</span>
+            <input type="checkbox" checked={selected.enabled} onchange={(event) => updateSelected({ enabled: event.currentTarget.checked })} />
+            <span aria-hidden="true"></span>
+          </label>
+        </header>
+
+        <section class="setting-group">
+          <h3>General</h3>
+          <label class="setting-row"><span>Name</span><input value={selected.name} maxlength="128" oninput={(event) => updateSelected({ name: event.currentTarget.value })} /></label>
+        </section>
+
+        <section class="setting-group">
+          <h3>Launch</h3>
+          <div class="setting-row"><span>Launch target</span><code title={selected.launchRef.value}>{selected.launchRef.value}</code></div>
+          {#if selected.validationError}
+            <div class="repair-callout" role="alert"><span>{selected.validationError}</span><button class="secondary-button" type="button" aria-label={`Choose executable for ${selected.name}`} onclick={repairSelected}>Choose executable</button></div>
+          {/if}
+        </section>
+
+        <section class="setting-group settings-arguments">
+          <h3>Arguments</h3>
           <p>Each value is passed separately. Shell syntax is never interpreted.</p>
           {#each selected.arguments as argument, index}
-            <div class="settings-argument"><label for={`argument-${selected.id}-${index}`} class="sr-only">Argument {index + 1}</label><input id={`argument-${selected.id}-${index}`} value={argument} oninput={(event) => updateArgument(index, event.currentTarget.value)} /><button type="button" aria-label={`Remove argument ${index + 1}`} onclick={() => removeArgument(index)}>Remove</button></div>
+            <div class="settings-argument"><label for={`argument-${selected.id}-${index}`} class="sr-only">Argument {index + 1}</label><input id={`argument-${selected.id}-${index}`} value={argument} oninput={(event) => updateArgument(index, event.currentTarget.value)} /><button class="icon-button icon-button--small" type="button" aria-label={`Remove argument ${index + 1}`} onclick={() => removeArgument(index)}><IconXRegular /></button></div>
           {/each}
-          <button class="secondary-button" type="button" onclick={addArgument}>Add argument</button>
-        </fieldset>
+          <button class="secondary-button secondary-button--compact" type="button" onclick={addArgument}><span aria-hidden="true"><IconPlusRegular /></span>Add argument</button>
+        </section>
+
+        <button class="danger-row" type="button" aria-label={`Remove ${selected.name}`} onclick={removeSelected}>Remove app</button>
       {:else}
         <p class="settings-empty">Select an app to edit its settings.</p>
       {/if}
     </section>
 
-    <aside class="settings-discovery">
-      <div class="settings-section-heading"><h2>Installed apps</h2><button class="secondary-button" type="button" onclick={addExecutable}>Add executable</button></div>
-      <label class="sr-only" for="discovery-search">Search installed apps</label>
-      <input id="discovery-search" placeholder="Search installed apps" bind:value={search} />
-      {#if discoveryFailed}
-        <p class="settings-empty" role="status">Could not load installed apps.</p>
-      {:else if shownDiscovered.length === 0}
-        <p class="settings-empty">No installed apps match.</p>
-      {:else}
-        <ul class="settings-discovery-list" aria-label="Installed apps">
-          {#each shownDiscovered as app (app.id)}
-            <li>{#if app.iconDataUrl}<img src={app.iconDataUrl} alt="" />{:else}<span class="settings-icon" aria-hidden="true">□</span>{/if}<span title={app.name}>{app.name}</span><button type="button" aria-label={`Add ${app.name}`} onclick={() => addDiscovered(app)}>Add</button></li>
-          {/each}
-        </ul>
-      {/if}
-    </aside>
   </section>
 
   <footer class="settings-footer"><span aria-live="polite">{saving ? 'Saving settings…' : ''}</span><button class="primary-button" type="button" disabled={!canSave} onclick={save}>{saving ? 'Saving…' : 'Save changes'}</button></footer>
+
+  {#if showAddApps}
+    <div class="dialog-backdrop">
+      <div class="add-apps-dialog" role="dialog" aria-modal="true" aria-labelledby="add-apps-title" bind:this={addAppsDialog}>
+        <header class="dialog-header">
+          <div>
+            <h2 id="add-apps-title">Add apps</h2>
+            <p>Choose an installed app or browse for an executable.</p>
+          </div>
+          <button class="icon-button" type="button" aria-label="Close Add apps" onclick={closeAddApps}>
+            <span aria-hidden="true"><IconXRegular /></span>
+          </button>
+        </header>
+        <label class="search-field" for="discovery-search">
+          <span class="sr-only">Search installed apps</span>
+          <span aria-hidden="true"><IconMagnifyingGlassRegular /></span>
+          <input id="discovery-search" placeholder="Search installed apps" bind:value={search} />
+        </label>
+        {#if discoveryFailed}
+          <p class="settings-empty" role="status">Could not load installed apps.</p>
+        {:else if shownDiscovered.length === 0}
+          <p class="settings-empty">No installed apps match.</p>
+        {:else}
+          <ul class="settings-discovery-list" aria-label="Installed apps">
+            {#each shownDiscovered as app (app.id)}
+              <li>
+                {#if app.iconDataUrl}
+                  <img src={app.iconDataUrl} alt="" />
+                {:else}
+                  <span class="settings-icon" aria-hidden="true"><IconAppWindowRegular /></span>
+                {/if}
+                <span title={app.name}>{app.name}</span>
+                <button class="quiet-button" type="button" aria-label={`Add ${app.name}`} onclick={() => addDiscovered(app)}>Add</button>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+        <div class="dialog-footer">
+          <button class="secondary-button" type="button" onclick={addExecutable}>Add executable</button>
+        </div>
+      </div>
+    </div>
+  {/if}
 </main>

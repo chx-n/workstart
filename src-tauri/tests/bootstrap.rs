@@ -26,8 +26,8 @@ fn tauri_configuration_defines_secure_fixed_windows() {
     assert_eq!(main["visible"], true);
 
     let settings = window(windows, "settings");
-    assert_eq!(settings["width"], 760);
-    assert_eq!(settings["height"], 600);
+    assert_eq!(settings["width"], 820);
+    assert_eq!(settings["height"], 620);
     assert_eq!(settings["resizable"], false);
     assert_eq!(settings["visible"], false);
 

@@ -32,25 +32,25 @@ function service(overrides: Record<string, unknown> = {}) {
 afterEach(cleanup);
 
 describe('Workstart settings', () => {
-  it('uses the graphite visual theme contract', async () => {
+  it('uses the familiar list-detail settings contract', async () => {
     const api = service();
     render(Settings, { props: { service: api } });
 
-    expect(await screen.findByRole('main')).toHaveAttribute('data-visual-theme', 'graphite');
-  });
-
-  it('uses the editorial command sheet layout contract', async () => {
-    const api = service();
-    render(Settings, { props: { service: api } });
-
-    expect(await screen.findByRole('main')).toHaveAttribute('data-layout', 'editorial-command-sheet');
+    expect(await screen.findByRole('main')).toHaveAttribute('data-visual-theme', 'familiar-workspace');
+    expect(screen.getByRole('main')).toHaveAttribute('data-layout', 'list-detail-settings');
+    await screen.findByText('Antigravity IDE', { selector: '.settings-target__name' });
+    expect(screen.getByRole('complementary', { name: 'Workflow' })).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'App details' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add app' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove Antigravity IDE' })).toBeInTheDocument();
   });
 
   it('filters discovered apps and adds a selected result to the workflow', async () => {
     const api = service();
     render(Settings, { props: { service: api } });
 
-    await screen.findByText('Antigravity IDE');
+    await screen.findByText('Antigravity IDE', { selector: '.settings-target__name' });
+    await fireEvent.click(screen.getByRole('button', { name: 'Add app' }));
     await fireEvent.input(screen.getByLabelText('Search installed apps'), { target: { value: 'brave' } });
 
     const discovered = await screen.findByRole('list', { name: 'Installed apps' });
@@ -58,13 +58,28 @@ describe('Workstart settings', () => {
     await fireEvent.click(within(discovered).getByRole('button', { name: 'Add Brave Browser' }));
 
     expect(await screen.findByText('Brave Browser', { selector: '.settings-target__name' })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Add apps' })).not.toBeInTheDocument();
+  });
+
+  it('opens and dismisses the Add apps dialog', async () => {
+    render(Settings, { props: { service: service() } });
+    await screen.findByText('Antigravity IDE', { selector: '.settings-target__name' });
+
+    expect(screen.queryByRole('dialog', { name: 'Add apps' })).not.toBeInTheDocument();
+    const addApp = screen.getByRole('button', { name: 'Add app' });
+    await fireEvent.click(addApp);
+    expect(screen.getByRole('dialog', { name: 'Add apps' })).toBeInTheDocument();
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Close Add apps' }));
+    expect(screen.queryByRole('dialog', { name: 'Add apps' })).not.toBeInTheDocument();
+    await waitFor(() => expect(addApp).toHaveFocus());
   });
 
   it('edits safe individual arguments and rejects NUL values before save', async () => {
     const api = service();
     render(Settings, { props: { service: api } });
 
-    await screen.findByText('Antigravity IDE');
+    await screen.findByText('Antigravity IDE', { selector: '.settings-target__name' });
     await fireEvent.click(screen.getByRole('button', { name: 'Add argument' }));
     const argument = screen.getByLabelText('Argument 1');
     await fireEvent.input(argument, { target: { value: '$(not a command)' } });
@@ -99,6 +114,8 @@ describe('Workstart settings', () => {
     });
     render(Settings, { props: { service: api } });
 
+    await screen.findByText('No apps yet. Add one to build your workflow.');
+    await fireEvent.click(screen.getByRole('button', { name: 'Add app' }));
     await screen.findByText('No installed apps match.');
     await fireEvent.click(screen.getByRole('button', { name: 'Add executable' }));
 
@@ -130,6 +147,8 @@ describe('Workstart settings', () => {
     });
     render(Settings, { props: { service: api } });
 
+    await screen.findByText('Antigravity IDE', { selector: '.settings-target__name' });
+    await fireEvent.click(screen.getByRole('button', { name: 'Add app' }));
     expect(await screen.findByText('Could not load installed apps.')).toBeInTheDocument();
     await fireEvent.click(screen.getByRole('button', { name: 'Export diagnostics' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not export diagnostics.');

@@ -78,8 +78,8 @@ export const tauriWorkstartService: WorkstartService = {
     new WebviewWindow('settings', {
       title: 'Workstart Settings',
       url: 'index.html?window=settings',
-      width: 760,
-      height: 600,
+      width: 820,
+      height: 620,
       resizable: false,
       maximizable: false,
       fullscreen: false,

@@ -188,6 +188,9 @@ importers:
       jsdom:
         specifier: ^27.0.0
         version: 27.4.0
+      phosphor-icons-svelte:
+        specifier: 2.1.0
+        version: 2.1.0(svelte@5.57.2)
       svelte:
         specifier: ^5.0.0
         version: 5.57.2
@@ -990,6 +993,11 @@ packages:
 
   pathe@2.0.3:
     resolution: {integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==}
+
+  phosphor-icons-svelte@2.1.0:
+    resolution: {integrity: sha512-gTNxjkc3Wth5stZuVrMWrP07Obv5wUxg9zAqe2tujnLIKa+RaVWNgjOzR+Y9RE3l7bV1PN7dGcBAWR+ps7HA+Q==}
+    peerDependencies:
+      svelte: '>= 5'
 
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
@@ -1848,6 +1856,10 @@ snapshots:
       entities: 8.1.0
 
   pathe@2.0.3: {}
+
+  phosphor-icons-svelte@2.1.0(svelte@5.57.2):
+    dependencies:
+      svelte: 5.57.2
 
   picocolors@1.1.1: {}
 

@@ -1,4 +1,10 @@
 <script lang="ts">
+  import IconAppWindowRegular from 'phosphor-icons-svelte/IconAppWindowRegular.svelte';
+  import IconCheckCircleFill from 'phosphor-icons-svelte/IconCheckCircleFill.svelte';
+  import IconGearRegular from 'phosphor-icons-svelte/IconGearRegular.svelte';
+  import IconProhibitRegular from 'phosphor-icons-svelte/IconProhibitRegular.svelte';
+  import IconSpinnerGapRegular from 'phosphor-icons-svelte/IconSpinnerGapRegular.svelte';
+  import IconWarningCircleRegular from 'phosphor-icons-svelte/IconWarningCircleRegular.svelte';
   import { onDestroy, onMount } from 'svelte';
 
   import {
@@ -171,48 +177,42 @@
   <title>Workstart</title>
 </svelte:head>
 
-<main class="app-shell" data-visual-theme="graphite" data-layout="editorial-command-sheet">
+<main class="app-shell" data-visual-theme="familiar-workspace" data-layout="launcher">
   <header class="app-header">
-    <div>
+    <div class="app-heading">
       <h1>Workstart</h1>
       <p>Start your workspace in one click.</p>
     </div>
-    <button class="icon-button" type="button" aria-label="Open settings" onclick={openSettings}>
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path
-          d="M12 15.25A3.25 3.25 0 1 0 12 8.75a3.25 3.25 0 0 0 0 6.5Zm7.05-2.06a7.84 7.84 0 0 0 .04-2.12l1.66-1.3-1.8-3.12-1.98.79a8.2 8.2 0 0 0-1.83-1.07L14.85 4h-3.6l-.3 2.37a8.2 8.2 0 0 0-1.82 1.07l-1.98-.79-1.8 3.12 1.66 1.3a7.84 7.84 0 0 0 .04 2.12l-1.7 1.34 1.8 3.12 2.02-.81c.55.44 1.16.8 1.81 1.05l.27 2.11h3.6l.27-2.11a8.2 8.2 0 0 0 1.81-1.05l2.02.81 1.8-3.12-1.7-1.34Z"
-        />
-      </svg>
+    <button class="icon-button" type="button" aria-label="Open settings" title="Settings" onclick={openSettings}>
+      <span aria-hidden="true"><IconGearRegular /></span>
     </button>
   </header>
 
-  <section class="target-panel" aria-label="Apps in your workflow">
+  <section class="workflow-surface" aria-label="Apps in your workflow">
     {#if loading}
-      <div class="state-card" aria-hidden="true">
-        <span class="spinner"></span>
+      <div class="state-panel" aria-hidden="true">
+        <span class="spinner"><IconSpinnerGapRegular /></span>
         <span>Loading your workflow</span>
       </div>
     {:else if loadFailed}
-      <div class="state-card state-card--error" role="alert">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2.5 20h19L12 3Zm0 5.5v6m0 2.5v.5" /></svg>
+      <div class="state-panel state-panel--error" role="alert">
+        <span aria-hidden="true"><IconWarningCircleRegular /></span>
         <span><strong>Could not load your workflow</strong><small>Open Workstart again to retry.</small></span>
       </div>
     {:else if apps.length === 0}
-      <div class="state-card">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 6.5h14v11H5zM8 10h8m-8 3h5" /></svg>
+      <div class="state-panel">
+        <span aria-hidden="true"><IconAppWindowRegular /></span>
         <span><strong>No apps yet</strong><small>Add apps from Settings to get started.</small></span>
       </div>
     {:else}
-      <ul class="target-list">
+      <ul class="target-list" aria-label="Apps in your workflow">
         {#each apps as app (app.id)}
           <li class:target-row--muted={!app.enabled} class:target-row--failed={statuses[app.id] === 'Failed'}>
             <span class="app-icon">
               {#if app.iconDataUrl}
                 <img src={app.iconDataUrl} alt={app.name} />
               {:else}
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M5.5 5.5h5v5h-5zm8 0h5v5h-5zm-8 8h5v5h-5zm8 0h5v5h-5z" />
-                </svg>
+                <IconAppWindowRegular />
               {/if}
             </span>
             <span class="target-copy">
@@ -222,7 +222,18 @@
               {/if}
             </span>
             <span class="target-status" data-status={statuses[app.id]}>
-              {statuses[app.id]}
+              <span class="status-icon" aria-label={statuses[app.id]}>
+                {#if statuses[app.id] === 'Failed'}
+                  <IconWarningCircleRegular />
+                {:else if statuses[app.id] === 'Launching'}
+                  <IconSpinnerGapRegular class="status-icon--spinning" />
+                {:else if statuses[app.id] === 'Disabled'}
+                  <IconProhibitRegular />
+                {:else}
+                  <IconCheckCircleFill />
+                {/if}
+              </span>
+              <span aria-hidden="true">{statuses[app.id]}</span>
             </span>
           </li>
         {/each}
@@ -233,7 +244,7 @@
   <footer class="action-area">
     {#if settingsError}<p class="settings-error" role="alert">Could not open Settings.</p>{/if}
     <p class="summary" role="status" aria-live="polite">{summary}</p>
-    <button class="primary-button" type="button" disabled={!canLaunch} onclick={startWork}>
+    <button class="primary-button primary-button--full" type="button" disabled={!canLaunch} onclick={startWork}>
       {#if launching}<span class="button-spinner" aria-hidden="true"></span>{/if}
       {complete ? 'Work started' : buttonLabel}
     </button>

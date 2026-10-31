@@ -72,18 +72,12 @@ afterEach(() => {
 });
 
 describe('Workstart main interface', () => {
-  it('uses the graphite visual theme contract', async () => {
+  it('uses the familiar workspace visual contract', async () => {
     const api = service([target()]);
     render(App, { props: { service: api } });
 
-    expect(await screen.findByRole('main')).toHaveAttribute('data-visual-theme', 'graphite');
-  });
-
-  it('uses the editorial command sheet layout contract', async () => {
-    const api = service([target()]);
-    render(App, { props: { service: api } });
-
-    expect(await screen.findByRole('main')).toHaveAttribute('data-layout', 'editorial-command-sheet');
+    expect(await screen.findByRole('main')).toHaveAttribute('data-visual-theme', 'familiar-workspace');
+    expect(screen.getByRole('main')).toHaveAttribute('data-layout', 'launcher');
   });
 
   it('shows a loading state while the workflow is being fetched', () => {
@@ -110,7 +104,9 @@ describe('Workstart main interface', () => {
     expect(rows).toHaveLength(2);
     expect(within(rows[0]).getByText('Ready')).toBeInTheDocument();
     expect(within(rows[1]).getByText('Ready')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Start Work' })).toBeEnabled();
+    expect(screen.getByRole('list', { name: 'Apps in your workflow' })).toHaveClass('target-list');
+    expect(screen.getByRole('button', { name: 'Start Work' })).toHaveClass('primary-button', 'primary-button--full');
+    expect(screen.getAllByLabelText('Ready')).toHaveLength(2);
     expect(screen.getByRole('img', { name: 'Antigravity' })).toHaveAttribute('src', 'data:image/png;base64,AAAA');
   });
 
